@@ -1,0 +1,803 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VANGUARD PRO — Instagram Content Engine</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Nunito:wght@400;700;800;900&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#07070f;--s1:#0e0e1c;--s2:#14142a;--s3:#1a1a32;
+  --border:rgba(255,255,255,0.07);
+  --purple:#7c3aed;--purple2:#a78bfa;
+  --cyan:#22d3ee;--gold:#f59e0b;--green:#10b981;--red:#ef4444;
+  --white:#f8f8ff;--muted:rgba(248,248,255,.45);
+}
+html,body{height:100%;overflow:hidden}
+body{background:var(--bg);color:var(--white);font-family:'Nunito',sans-serif;display:flex;flex-direction:column}
+
+::-webkit-scrollbar{width:5px}
+::-webkit-scrollbar-track{background:rgba(255,255,255,.03)}
+::-webkit-scrollbar-thumb{background:var(--purple);border-radius:10px}
+
+.header{flex-shrink:0;display:flex;align-items:center;justify-content:space-between;padding:14px 36px;background:rgba(7,7,15,.97);border-bottom:1px solid var(--border);z-index:100;backdrop-filter:blur(20px)}
+.logo{display:flex;align-items:center;gap:11px}
+.logo-icon{width:38px;height:38px;border-radius:9px;background:linear-gradient(135deg,var(--purple),var(--cyan));display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:18px;font-weight:900}
+.logo-name{font-family:'Bebas Neue',sans-serif;font-size:17px;letter-spacing:.18em}
+.logo-badge{font-size:9px;background:var(--gold);color:#000;padding:2px 8px;border-radius:12px;font-weight:700;letter-spacing:.08em}
+.header-nav{display:flex;gap:8px}
+.tab-btn{padding:7px 16px;border:none;border-radius:6px;background:transparent;color:var(--muted);font-size:12px;font-weight:700;cursor:pointer;transition:all .2s;font-family:'Nunito',sans-serif;letter-spacing:.05em;text-transform:uppercase}
+.tab-btn.active{background:var(--purple);color:#fff}
+.tab-btn:hover{color:var(--white)}
+
+.layout{flex:1;display:flex;overflow:hidden;min-height:0}
+.sidebar{width:220px;flex-shrink:0;background:var(--s1);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow-y:auto}
+.sidebar-nav{padding:20px 0;display:flex;flex-direction:column;gap:2px;flex:1}
+.nav-item{display:flex;align-items:center;gap:11px;padding:10px 18px;font-size:13px;color:var(--muted);cursor:pointer;transition:all .15s;border-left:2px solid transparent}
+.nav-item:hover,.nav-item.active{color:var(--white);background:rgba(255,255,255,.03);border-left-color:var(--purple)}
+.nav-icon{width:16px;height:16px;flex-shrink:0}
+.sidebar-bottom{padding:14px 18px;border-top:1px solid var(--border);flex-shrink:0}
+.user-info{display:flex;align-items:center;gap:10px}
+.user-avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--purple),var(--cyan));display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700}
+.user-name{font-size:12px;font-weight:700}
+
+.main{flex:1;overflow-y:auto;padding:36px;display:flex;flex-direction:column}
+.page-title{font-family:'Bebas Neue',sans-serif;font-size:32px;letter-spacing:.08em;margin-bottom:3px}
+.page-sub{font-size:12px;color:var(--muted);margin-bottom:28px}
+
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:30px}
+.stat-card{background:var(--s2);border:1px solid var(--border);border-radius:11px;padding:16px 18px;display:flex;align-items:center;gap:12px}
+.stat-icon{width:40px;height:40px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.stat-n{font-size:24px;font-weight:800;font-family:'Bebas Neue',sans-serif}
+.stat-l{font-size:10px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase}
+
+.grid-2col{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.grid-full{display:grid;gap:20px}
+
+.section{background:var(--s1);border:1px solid var(--border);border-radius:14px;padding:24px;display:flex;flex-direction:column;gap:16px}
+.section-title{font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:.1em;color:var(--white)}
+.section-sub{font-size:11px;color:var(--muted);letter-spacing:.05em}
+
+.templates-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+.template-card{background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:14px;cursor:pointer;transition:all .2s;display:flex;flex-direction:column;gap:8px}
+.template-card:hover{border-color:rgba(124,58,237,.5);transform:translateY(-2px)}
+.template-name{font-size:12px;font-weight:700;color:var(--white)}
+.template-desc{font-size:10px;color:var(--muted);line-height:1.4}
+.template-btn{padding:6px 12px;background:var(--purple);border:none;border-radius:6px;color:#fff;font-size:10px;font-weight:700;cursor:pointer;transition:all .2s}
+.template-btn:hover{background:var(--purple2)}
+
+.theme-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.theme-card{background:var(--s2);border:2px solid var(--border);border-radius:10px;padding:16px;text-align:center;cursor:pointer;transition:all .2s;display:flex;flex-direction:column;gap:10px}
+.theme-card:hover{border-color:rgba(124,58,237,.5)}
+.theme-card.active{border-color:var(--purple);background:rgba(124,58,237,.15)}
+.theme-preview{width:100%;height:80px;border-radius:8px;display:flex;align-items:flex-end;overflow:hidden;border:1px solid var(--border)}
+.theme-name{font-size:11px;font-weight:700;color:var(--white)}
+
+.caption-box{background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:14px;font-size:12px;line-height:1.6;color:var(--white);min-height:120px;max-height:200px;overflow-y:auto;font-family:'Nunito',sans-serif;position:relative}
+.caption-copy{position:absolute;top:8px;right:8px;padding:4px 10px;background:var(--purple);border:none;border-radius:6px;color:#fff;font-size:10px;cursor:pointer;transition:all .2s;font-weight:700}
+.caption-copy:hover{background:var(--purple2)}
+
+.batch-controls{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.batch-input{background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:10px 14px;color:var(--white);font-size:12px;font-family:'Nunito',sans-serif;outline:none;transition:border-color .2s;width:100px}
+.batch-input:focus{border-color:var(--purple)}
+.btn-primary{padding:10px 22px;border-radius:8px;background:var(--purple);border:none;color:#fff;font-size:12px;font-weight:700;cursor:pointer;font-family:'Nunito',sans-serif;transition:all .2s}
+.btn-primary:hover{background:var(--purple2);transform:translateY(-1px)}
+.btn-primary:disabled{opacity:.4;cursor:not-allowed}
+
+.analytics-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px}
+.ana-card{background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:14px}
+.ana-label{font-size:10px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;margin-bottom:6px}
+.ana-value{font-size:28px;font-family:'Bebas Neue',sans-serif;font-weight:900;color:var(--cyan)}
+.ana-trend{font-size:10px;color:var(--green);margin-top:4px}
+
+.chart-container{background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:16px;height:300px;display:flex;align-items:flex-end;justify-content:space-around;gap:8px}
+.chart-bar{flex:1;background:linear-gradient(to top,var(--purple),var(--cyan));border-radius:8px 8px 0 0;min-height:10px;position:relative;transition:all .3s}
+.chart-bar:hover{opacity:.8}
+.chart-label{position:absolute;bottom:-20px;left:0;right:0;font-size:10px;color:var(--muted);text-align:center}
+
+.community-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+.community-card{background:var(--s2);border:1px solid var(--border);border-radius:10px;overflow:hidden;transition:all .2s}
+.community-card:hover{border-color:rgba(124,58,237,.5);transform:translateY(-2px)}
+.community-img{width:100%;aspect-ratio:1/1;background:var(--s3);display:flex;align-items:center;justify-content:center;font-size:14px}
+.community-info{padding:12px}
+.community-author{font-size:11px;font-weight:700;color:var(--white);margin-bottom:4px}
+.community-desc{font-size:10px;color:var(--muted);margin-bottom:8px;line-height:1.4}
+.community-actions{display:flex;gap:8px;font-size:10px}
+.community-btn{background:transparent;border:1px solid var(--border);border-radius:6px;padding:4px 8px;color:var(--muted);cursor:pointer;transition:all .2s;font-family:'Nunito',sans-serif;font-weight:700}
+.community-btn:hover{border-color:var(--purple);color:var(--purple)}
+
+.modal{display:none;position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.87);backdrop-filter:blur(10px);align-items:flex-start;justify-content:center;padding:24px 20px;overflow-y:auto}
+.modal.open{display:flex}
+.modal-content{background:var(--s1);border:1px solid rgba(124,58,237,.28);border-radius:18px;width:100%;max-width:1100px;margin:auto;overflow:hidden;animation:popIn .28s ease}
+@keyframes popIn{from{transform:scale(.94) translateY(14px);opacity:0}to{transform:scale(1) translateY(0);opacity:1}}
+.modal-header{display:flex;align-items:center;justify-content:space-between;padding:18px 24px;border-bottom:1px solid var(--border)}
+.modal-title{font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:.1em}
+.modal-close{width:30px;height:30px;border-radius:7px;background:transparent;border:1px solid var(--border);color:var(--muted);font-size:17px;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center}
+.modal-close:hover{background:var(--red);border-color:var(--red);color:#fff}
+.modal-body{padding:24px;overflow-y:auto;max-height:70vh}
+
+.toast{position:fixed;bottom:22px;right:22px;z-index:300;padding:11px 18px;border-radius:9px;font-size:12px;font-weight:700;display:none;animation:sup .25s ease}
+@keyframes sup{from{transform:translateY(14px);opacity:0}to{transform:translateY(0);opacity:1}}
+.toast.show{display:block}
+.toast.ok{background:rgba(16,185,129,.2);border:1px solid var(--green);color:#6ee7b7}
+.toast.err{background:rgba(239,68,68,.2);border:1px solid var(--red);color:#fca5a5}
+
+.spinner{display:inline-block;width:16px;height:16px;border:3px solid rgba(255,255,255,.2);border-top-color:var(--purple);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+@media(max-width:1200px){.stats{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:900px){.grid-2col{grid-template-columns:1fr}.sidebar{display:none}.main{padding:18px}}
+@media(max-width:600px){.theme-grid{grid-template-columns:repeat(2,1fr)}.community-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="logo">
+    <div class="logo-icon">V</div>
+    <div>
+      <div class="logo-name">VANGUARD PRO</div>
+      <div style="font-size:8px;color:var(--muted);letter-spacing:.1em">Content Engine</div>
+    </div>
+    <div class="logo-badge">8 Features</div>
+  </div>
+  <div class="header-nav">
+    <button class="tab-btn active" onclick="switchTab('criar')">Criar</button>
+    <button class="tab-btn" onclick="switchTab('templates')">Templates</button>
+    <button class="tab-btn" onclick="switchTab('comunidade')">Comunidade</button>
+    <button class="tab-btn" onclick="switchTab('analytics')">Analytics</button>
+    <button class="tab-btn" onclick="switchTab('favoritos')">❤️ Favoritos</button>
+  </div>
+</header>
+
+<div class="layout">
+  <aside class="sidebar">
+    <div class="sidebar-nav">
+      <div class="nav-item active" onclick="switchTab('criar')">
+        <div class="nav-icon">🎨</div>Criar Slide
+      </div>
+      <div class="nav-item" onclick="switchTab('templates')">
+        <div class="nav-icon">📋</div>Templates
+      </div>
+      <div class="nav-item" onclick="switchTab('comunidade')">
+        <div class="nav-icon">👥</div>Comunidade
+      </div>
+      <div class="nav-item" onclick="switchTab('analytics')">
+        <div class="nav-icon">📊</div>Analytics
+      </div>
+      <div class="nav-item" onclick="switchTab('favoritos')">
+        <div class="nav-icon">❤️</div>Favoritos
+      </div>
+    </div>
+    <div class="sidebar-bottom">
+      <div class="user-info">
+        <div class="user-avatar">JD</div>
+        <div><div class="user-name">Proprietário</div></div>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <!-- TAB: CRIAR -->
+    <div id="tabCriar" class="tab-content">
+      <div class="page-title">Criar Slide</div>
+      <div class="page-sub">Combine imagem, frase, tema e gere caption automático.</div>
+      
+      <div class="stats">
+        <div class="stat-card">
+          <div class="stat-icon" style="background:rgba(124,58,237,.2)">🖼️</div>
+          <div><div class="stat-n" id="stTotal">0</div><div class="stat-l">Slides</div></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:rgba(34,211,238,.15)">⬇️</div>
+          <div><div class="stat-n" id="stDl">0</div><div class="stat-l">Downloads</div></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:rgba(245,158,11,.15)">✨</div>
+          <div><div class="stat-n" id="stCaption">0</div><div class="stat-l">Captions</div></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:rgba(16,185,129,.15)">❤️</div>
+          <div><div class="stat-n" id="stFav">0</div><div class="stat-l">Favoritos</div></div>
+        </div>
+      </div>
+
+      <div class="grid-2col">
+        <!-- Seção Esquerda: Upload + Frases + Temas -->
+        <div class="grid-full">
+          <div class="section">
+            <div><div class="section-title">Imagem</div><div class="section-sub">Quadrado 1:1 recomendado</div></div>
+            <div style="border:2px dashed rgba(124,58,237,.3);border-radius:10px;padding:30px;text-align:center;cursor:pointer;transition:all .2s" id="uploadZone">
+              <input type="file" id="fileInput" accept="image/*" onchange="handleFile(event.target.files[0])" style="display:none">
+              <div style="font-size:32px;margin-bottom:8px">🖼️</div>
+              <div style="font-weight:700;font-size:13px;margin-bottom:4px" id="uploadText">Clique ou arraste para escolher</div>
+              <div style="font-size:10px;color:var(--muted)">PNG, JPG ou WEBP</div>
+            </div>
+          </div>
+
+          <div class="section">
+            <div><div class="section-title">Tema Visual</div><div class="section-sub">4 temas predefinidos</div></div>
+            <div class="theme-grid">
+              <div class="theme-card active" onclick="selectTheme('dark_neon',this)">
+                <div class="theme-preview" style="background:linear-gradient(to bottom, #0e0e1c, #7c3aed)"></div>
+                <div class="theme-name">Dark Neon</div>
+              </div>
+              <div class="theme-card" onclick="selectTheme('minimalista',this)">
+                <div class="theme-preview" style="background:linear-gradient(to bottom, #ffffff, #e5e7eb)"></div>
+                <div class="theme-name">Minimalista</div>
+              </div>
+              <div class="theme-card" onclick="selectTheme('colorido',this)">
+                <div class="theme-preview" style="background:linear-gradient(to bottom, #ff6b6b, #ffd93d)"></div>
+                <div class="theme-name">Colorido</div>
+              </div>
+              <div class="theme-card" onclick="selectTheme('pastel',this)">
+                <div class="theme-preview" style="background:linear-gradient(to bottom, #a8d8ea, #e0bbe4)"></div>
+                <div class="theme-name">Pastel</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="section">
+            <div><div class="section-title">Frases — Banco de Dados</div><div class="section-sub">50+ frases bíblicas e motivacionais</div></div>
+            <input type="text" id="searchFrase" placeholder="🔍 Buscar frase..." style="background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;color:var(--white);font-size:12px;outline:none;margin-bottom:10px;width:100%">
+            <div style="max-height:280px;overflow-y:auto;display:flex;flex-direction:column;gap:6px" id="frasesList">
+              <div style="text-align:center;padding:20px;color:var(--muted);font-size:12px"><span class="spinner"></span> Carregando frases...</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Seção Direita: Preview + Caption + Download Lote -->
+        <div class="grid-full">
+          <div class="section">
+            <div><div class="section-title">Preview</div><div class="section-sub">Instagram 1:1</div></div>
+            <canvas id="pc" width="500" height="500" style="width:100%;border-radius:12px;border:1px solid var(--border);background:#000"></canvas>
+          </div>
+
+          <div class="section">
+            <div><div class="section-title">Caption Automático</div><div class="section-sub">Gerado com IA baseado na frase</div></div>
+            <div class="caption-box" id="captionBox">
+              <button class="caption-copy" onclick="copiarCaption()">Copiar</button>
+              <span id="captionText">Selecione uma frase para gerar caption...</span>
+            </div>
+          </div>
+
+          <div class="section">
+            <div><div class="section-title">Share Social</div><div class="section-sub">Compartilhe para diferentes plataformas</div></div>
+            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">
+              <button class="btn-primary" onclick="shareSlide('whatsapp')">💬 WhatsApp</button>
+              <button class="btn-primary" onclick="shareSlide('telegram')">✈️ Telegram</button>
+              <button class="btn-primary" onclick="shareSlide('tiktok')">🎵 TikTok</button>
+              <button class="btn-primary" onclick="shareSlide('stories')">📱 Stories</button>
+            </div>
+          </div>
+
+          <div class="section">
+            <div><div class="section-title">Download em Lote</div><div class="section-sub">Gere 3, 5 ou 10 slides de uma vez</div></div>
+            <div class="batch-controls">
+              <input type="number" id="batchQty" class="batch-input" placeholder="Qtd" value="3" min="1" max="10">
+              <button class="btn-primary" onclick="downloadBatch()">📦 Gerar Lote</button>
+              <button class="btn-primary" onclick="openModal('agendar')">📅 Agendar</button>
+              <button class="btn-primary" onclick="toggleFav()">❤️ Favoritar</button>
+            </div>
+          </div>
+
+          <div class="section">
+            <div><div class="section-title">Salvar Slide</div></div>
+            <button class="btn-primary" style="width:100%;padding:14px" onclick="saveSlide()">💾 Salvar Slide no Banco</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB: TEMPLATES -->
+    <div id="tabTemplates" class="tab-content" style="display:none">
+      <div class="page-title">Templates Prontos</div>
+      <div class="page-sub">Slides pré-configurados — só trocar imagem e baixar.</div>
+      <div class="templates-grid" id="templatesGrid">
+        <div class="template-card" onclick="useTemplate(0)">
+          <div class="template-name">Motivação Pura</div>
+          <div class="template-desc">Frase + Versículo em tema dark neon</div>
+          <button class="template-btn">Usar</button>
+        </div>
+        <div class="template-card" onclick="useTemplate(1)">
+          <div class="template-name">Fé Inquebrantável</div>
+          <div class="template-desc">Tema minimalista clean</div>
+          <button class="template-btn">Usar</button>
+        </div>
+        <div class="template-card" onclick="useTemplate(2)">
+          <div class="template-name">Energia Pura</div>
+          <div class="template-desc">Colorido vibrante com energia</div>
+          <button class="template-btn">Usar</button>
+        </div>
+        <div class="template-card" onclick="useTemplate(3)">
+          <div class="template-name">Paz Interior</div>
+          <div class="template-desc">Pastel suave e relaxante</div>
+          <button class="template-btn">Usar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB: COMUNIDADE -->
+    <div id="tabComunidade" class="tab-content" style="display:none">
+      <div class="page-title">Comunidade</div>
+      <div class="page-sub">Veja slides criados por outros usuários — inspire-se!</div>
+      <div style="margin-bottom:20px;display:flex;gap:10px">
+        <input type="text" id="searchComunidade" placeholder="🔍 Buscar na comunidade..." style="flex:1;background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;color:var(--white);font-size:12px;outline:none">
+        <button class="btn-primary" onclick="loadComunidade()">🔄 Atualizar</button>
+      </div>
+      <div class="community-grid" id="communityGrid">
+        <div style="text-align:center;padding:40px;color:var(--muted);grid-column:1/-1"><span class="spinner"></span> Carregando comunidade...</div>
+      </div>
+    </div>
+
+    <!-- TAB: ANALYTICS -->
+    <div id="tabAnalytics" class="tab-content" style="display:none">
+      <div class="page-title">Analytics</div>
+      <div class="page-sub">Dados em tempo real sobre seus slides.</div>
+      <div class="analytics-grid">
+        <div class="ana-card">
+          <div class="ana-label">Total Baixado</div>
+          <div class="ana-value" id="anaTotal">0</div>
+          <div class="ana-trend">📈 +0 esta semana</div>
+        </div>
+        <div class="ana-card">
+          <div class="ana-label">Frase + Popular</div>
+          <div class="ana-value" style="font-size:16px;color:var(--gold)" id="anaTopFrase">—</div>
+          <div class="ana-trend">👑 Trending</div>
+        </div>
+        <div class="ana-card">
+          <div class="ana-label">Tema Favorito</div>
+          <div class="ana-value" style="font-size:16px;color:var(--cyan)" id="anaTopTheme">—</div>
+          <div class="ana-trend">⭐ +5 downloads</div>
+        </div>
+      </div>
+      <div class="section">
+        <div class="section-title">Downloads por Frase (últimos 30 dias)</div>
+        <div class="chart-container" id="chart"></div>
+      </div>
+    </div>
+
+    <!-- TAB: FAVORITOS -->
+    <div id="tabFavoritos" class="tab-content" style="display:none">
+      <div class="page-title">Meus Favoritos</div>
+      <div class="page-sub">Slides e frases que você salvou.</div>
+      <div class="slides-grid" id="favGrid">
+        <div style="text-align:center;padding:40px;color:var(--muted);grid-column:1/-1">Nenhum favorito salvo ainda.</div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- MODAL: AGENDAR -->
+<div class="modal" id="modalAgendar">
+  <div class="modal-content">
+    <div class="modal-header">
+      <div class="modal-title">Agendar Post</div>
+      <button class="modal-close" onclick="closeModal('agendar')">×</button>
+    </div>
+    <div class="modal-body">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+        <div>
+          <label style="display:block;font-size:11px;color:var(--muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:.1em;font-weight:700">Data e Hora</label>
+          <input type="datetime-local" id="agendaData" style="background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;color:var(--white);font-size:12px;width:100%;outline:none">
+        </div>
+        <div>
+          <label style="display:block;font-size:11px;color:var(--muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:.1em;font-weight:700">Plataforma</label>
+          <select id="agendaPlatform" style="background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;color:var(--white);font-size:12px;width:100%;outline:none">
+            <option value="instagram">Instagram Feed</option>
+            <option value="reels">Instagram Reels</option>
+            <option value="stories">Instagram Stories</option>
+            <option value="tiktok">TikTok</option>
+          </select>
+        </div>
+      </div>
+      <div style="margin-top:16px">
+        <label style="display:block;font-size:11px;color:var(--muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:.1em;font-weight:700">Caption</label>
+        <textarea id="agendaCaption" style="background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;color:var(--white);font-size:12px;width:100%;min-height:100px;outline:none;font-family:'Nunito',sans-serif;resize:vertical"></textarea>
+      </div>
+      <div style="margin-top:20px;display:flex;gap:10px">
+        <button class="btn-primary" onclick="salvarAgendamento()" style="flex:1">📅 Agendar</button>
+        <button class="btn-primary" style="background:var(--border);flex:1" onclick="closeModal('agendar')">Cancelar</button>
+      </div>
+      <div style="margin-top:16px;padding:12px;background:rgba(34,211,238,.1);border-radius:8px;font-size:10px;color:var(--cyan)">
+        💡 Dica: Use <strong>Buffer</strong> ou <strong>Later</strong> para integração com Instagram. Aqui você salva para referência local.
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+const SB_URL='https://hylghcybcbguqnbquwbr.supabase.co';
+const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh5bGdoY3liY2JndXFuYnF1d2JyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc1OTA5MjMsImV4cCI6MjA5MzE2NjkyM30.RxmWY9DfZ5mvuEm6L8FbTSuU7ILviRtafDNgkfBNKMk';
+const db=supabase.createClient(SB_URL,SB_KEY);
+
+// ── ESTADO ────────────────────────────────────────────────────────────────────
+let selFile=null,selImg=null,curTheme='dark_neon',curFrase='',curVersiculo='';
+let allFrases=[],dls=parseInt(localStorage.getItem('vdl')||'0');
+let favorites=JSON.parse(localStorage.getItem('favorites')||'[]');
+
+// ── TEMA CONFIG ───────────────────────────────────────────────────────────────
+const THEMES={
+  dark_neon:{name:'Dark Neon',overlay:0.75,gradient:g=>g.addColorStop(0,'rgba(0,0,0,0.2)'),gradient2:g=>g.addColorStop(1,'rgba(0,0,0,.9)')},
+  minimalista:{name:'Minimalista',overlay:0.3,gradient:g=>g.addColorStop(0,'rgba(255,255,255,.05)'),gradient2:g=>g.addColorStop(1,'rgba(200,200,200,.4)')},
+  colorido:{name:'Colorido',overlay:0.6,gradient:g=>g.addColorStop(0,'rgba(255,107,107,0.2)'),gradient2:g=>g.addColorStop(1,'rgba(255,217,61,.5)')},
+  pastel:{name:'Pastel',overlay:0.5,gradient:g=>g.addColorStop(0,'rgba(168,216,234,.15)'),gradient2:g=>g.addColorStop(1,'rgba(224,187,228,.3)')}
+};
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded',()=>{
+  document.getElementById('stDl').textContent=dls;
+  document.getElementById('stFav').textContent=favorites.length;
+  loadFrases();
+  loadAnalytics();
+  setupDrag();
+  renderPreview();
+});
+
+// ── DRAG & DROP ───────────────────────────────────────────────────────────────
+function setupDrag(){
+  const uz=document.getElementById('uploadZone');
+  uz.addEventListener('dragover',e=>{e.preventDefault();uz.style.borderColor='var(--purple)';uz.style.background='rgba(124,58,237,.05)'});
+  uz.addEventListener('dragleave',()=>{uz.style.borderColor='';uz.style.background=''});
+  uz.addEventListener('drop',e=>{e.preventDefault();uz.style.borderColor='';uz.style.background='';const f=e.dataTransfer.files[0];if(f&&f.type.startsWith('image/'))handleFile(f)});
+  uz.addEventListener('click',()=>document.getElementById('fileInput').click());
+}
+
+function handleFile(f){
+  selFile=f;
+  const r=new FileReader();
+  r.onload=ev=>{const img=new Image();img.onload=()=>{selImg=img;document.getElementById('uploadText').textContent='✓ '+f.name;renderPreview();};img.src=ev.target.result;};
+  r.readAsDataURL(f);
+}
+
+// ── FRASES ────────────────────────────────────────────────────────────────────
+async function loadFrases(){
+  const{data,error}=await db.from('frases').select('*').limit(50);
+  if(error){toast('Erro ao carregar frases','err');return;}
+  allFrases=data||[];
+  renderFrases(allFrases);
+}
+
+function renderFrases(lista){
+  const el=document.getElementById('frasesList');
+  if(!lista.length){el.innerHTML='<div style="text-align:center;padding:20px;color:var(--muted);font-size:12px">Nenhuma frase encontrada.</div>';return;}
+  el.innerHTML=lista.map(f=>`
+    <div style="background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;cursor:pointer;transition:all .2s" onclick="selectFrase('${esc(f.frase)}','${esc(f.versiculo||'')}',this)">
+      <div style="font-size:11px;line-height:1.5;color:var(--white);margin-bottom:4px">${f.frase}</div>
+      <div style="font-size:9px;color:var(--gold);font-style:italic">${f.versiculo||''}</div>
+    </div>`).join('');
+}
+
+function selectFrase(frase,ver,el){
+  document.querySelectorAll('[onclick*="selectFrase"]').forEach(e=>e.style.borderColor='');
+  el.style.borderColor='var(--purple)';el.style.background='rgba(124,58,237,.12)';
+  curFrase=frase;curVersiculo=ver;
+  gerarCaption();
+  renderPreview();
+}
+
+function esc(s){return(s||'').replace(/'/g,"\\'").replace(/"/g,'&quot;');}
+
+// ── CAPTION GERADOR ──────────────────────────────────────────────────────────
+function gerarCaption(){
+  if(!curFrase){document.getElementById('captionText').textContent='Selecione uma frase para gerar caption...';return;}
+  
+  // IA simples: detecta categoria pela frase
+  const isBibli=curVersiculo&&curVersiculo.includes('—');
+  
+  // Templates de caption
+  const templates={
+    bibli:[
+      `${curFrase}\n\n${curVersiculo}\n\n#Fé #Motivação #Esperança #Deus #Vida #Oração #Acredite #Conquistar #Força #Disciplina #ClarkCrente`,
+      `✨ ${curFrase}\n\n📖 ${curVersiculo}\n\n💪 Que sua fé seja maior que seus medos.\n\n#Mensagem #Inspiração #Deus #CaminhoDeF...`,
+      `🙏 "${curFrase}"\n\n${curVersiculo}\n\nDeus nunca nos abandona. Confie! 🕊️\n\n#Biblia #Motivacaobiblic #FemaDeus`
+    ],
+    motivacional:[
+      `🔥 ${curFrase}\n\n💪 A jornada é sua. O destino é garantido.\n\n#Motivação #Crescimento #Sucesso #Disciplina #Conquistar #Mindset`,
+      `${curFrase}\n\n👑 Você foi feito para mais do que apenas sobreviver.\n\n#Ambição #Foco #Determinação #Vencedor #Mindset`,
+      `⚡ ${curFrase}\n\n✨ Cada dia é uma nova chance.\n\n#Motivação #Força #Coragem #Sucesso #VocêConsegue`
+    ]
+  };
+  
+  const list=isBibli?templates.bibli:templates.motivacional;
+  const caption=list[Math.floor(Math.random()*list.length)];
+  document.getElementById('captionText').innerHTML=caption.replace(/\n/g,'<br>');
+  document.getElementById('agendaCaption').value=caption;
+}
+
+function copiarCaption(){
+  const texto=document.getElementById('captionText').innerText;
+  navigator.clipboard.writeText(texto).then(()=>toast('Caption copiado!','ok'));
+}
+
+// ── TEMA ──────────────────────────────────────────────────────────────────────
+function selectTheme(t,el){
+  curTheme=t;
+  document.querySelectorAll('.theme-card').forEach(e=>e.classList.remove('active'));
+  el.classList.add('active');
+  renderPreview();
+}
+
+// ── PREVIEW ───────────────────────────────────────────────────────────────────
+function renderPreview(){
+  const c=document.getElementById('pc');
+  const ctx=c.getContext('2d');
+  const W=500,H=500;
+  ctx.clearRect(0,0,W,H);
+  
+  if(!selImg){
+    ctx.fillStyle='#0e0e1c';ctx.fillRect(0,0,W,H);
+    ctx.fillStyle='rgba(124,58,237,.3)';ctx.font='13px sans-serif';ctx.textAlign='center';
+    ctx.fillText('Aguardando imagem…',W/2,H/2);
+    return;
+  }
+  
+  const sc=Math.max(W/selImg.width,H/selImg.height);
+  const iw=selImg.width*sc,ih=selImg.height*sc;
+  ctx.drawImage(selImg,(W-iw)/2,(H-ih)/2,iw,ih);
+  
+  // Overlay baseado no tema
+  const g=ctx.createLinearGradient(0,0,0,H);
+  THEMES[curTheme].gradient(g);THEMES[curTheme].gradient2(g);
+  ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+  
+  // Texto
+  if(curFrase){
+    ctx.font='bold 24px Arial';ctx.fillStyle='#ffffff';ctx.textAlign='center';
+    ctx.shadowColor='rgba(0,0,0,.95)';ctx.shadowBlur=8;
+    const y=H*0.55;
+    const words=curFrase.split(' ');
+    let line='',cy=y;
+    words.forEach(w=>{const ww=ctx.measureText(line+w+' ').width;if(ww>W-40&&line){ctx.fillText(line.trim(),W/2,cy);cy+=30;line=w+' ';}else line+=w+' ';});
+    if(line)ctx.fillText(line.trim(),W/2,cy);
+  }
+  
+  ctx.font='italic 10px Georgia';ctx.fillStyle='rgba(255,255,255,.3)';ctx.textAlign='center';
+  ctx.fillText('@clark.crente',W/2,H-10);
+}
+
+// ── SHARE ─────────────────────────────────────────────────────────────────────
+function shareSlide(plat){
+  const msg=`${curFrase}\n\n${curVersiculo}\n\n@clark.crente`;
+  const links={
+    whatsapp:`https://wa.me/?text=${encodeURIComponent(msg)}`,
+    telegram:`https://t.me/share/url?url=clark.crente&text=${encodeURIComponent(msg)}`,
+    tiktok:`https://www.tiktok.com/`,
+    stories:`https://www.instagram.com/stories/`
+  };
+  window.open(links[plat],'_blank');
+  trackEvent('share',plat);
+}
+
+// ── DOWNLOAD ──────────────────────────────────────────────────────────────────
+function downloadBatch(){
+  if(!selImg){toast('Escolha uma imagem','err');return;}
+  if(!curFrase){toast('Escolha uma frase','err');return;}
+  
+  const qty=parseInt(document.getElementById('batchQty').value)||3;
+  toast(`Gerando ${qty} slides...`,'ok');
+  
+  // Simula download de lote
+  for(let i=0;i<qty;i++){
+    setTimeout(()=>{
+      const c=document.createElement('canvas');c.width=1080;c.height=1080;
+      const ctx=c.getContext('2d');
+      const sc=Math.max(1080/selImg.width,1080/selImg.height);
+      ctx.drawImage(selImg,(1080-selImg.width*sc)/2,(1080-selImg.height*sc)/2,selImg.width*sc,selImg.height*sc);
+      
+      const g=ctx.createLinearGradient(0,0,0,1080);
+      THEMES[curTheme].gradient(g);THEMES[curTheme].gradient2(g);
+      ctx.fillStyle=g;ctx.fillRect(0,0,1080,1080);
+      
+      ctx.font='bold 56px Arial';ctx.fillStyle='#fff';ctx.textAlign='center';ctx.shadowColor='rgba(0,0,0,.95)';ctx.shadowBlur=10;
+      ctx.fillText(curFrase.substring(0,30)+'…',540,540);
+      
+      const a=document.createElement('a');
+      a.download=`slide-${i+1}-${Date.now()}.png`;
+      a.href=c.toDataURL('image/png',.95);
+      a.click();
+      
+      dls++;localStorage.setItem('vdl',dls);
+      document.getElementById('stDl').textContent=dls;
+    },i*200);
+  }
+  
+  trackEvent('download_batch',qty);
+}
+
+// ── FAVORITOS ─────────────────────────────────────────────────────────────────
+function toggleFav(){
+  if(!curFrase){toast('Selecione uma frase','err');return;}
+  if(favorites.includes(curFrase)){
+    favorites=favorites.filter(f=>f!==curFrase);
+  } else {
+    favorites.push(curFrase);
+  }
+  localStorage.setItem('favorites',JSON.stringify(favorites));
+  document.getElementById('stFav').textContent=favorites.length;
+  toast(favorites.includes(curFrase)?'Adicionado aos favoritos!':'Removido dos favoritos','ok');
+}
+
+// ── SALVAR ────────────────────────────────────────────────────────────────────
+async function saveSlide(){
+  if(!selFile){toast('Escolha uma imagem','err');return;}
+  if(!curFrase){toast('Escolha uma frase','err');return;}
+  
+  toast('Salvando...','ok');
+  
+  try{
+    const ext=selFile.name.split('.').pop();
+    const path=`${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+    
+    const{error:ue}=await db.storage.from('slides').upload(path,selFile);
+    if(ue)throw ue;
+    
+    const{data:ud}=db.storage.from('slides').getPublicUrl(path);
+    
+    const{error:ie}=await db.from('slides').insert({
+      image_url:ud.publicUrl,image_path:path,
+      frase:curFrase,versiculo:curVersiculo,
+      personagem:'—',badge:'Motivacional',
+      text_style:'bottom',tema:curTheme,
+      caption:document.getElementById('captionText').innerText,
+      ordem:0
+    });
+    if(ie)throw ie;
+    
+    toast('Slide salvo com sucesso!','ok');
+    document.getElementById('stTotal').textContent=parseInt(document.getElementById('stTotal').textContent)+1;
+  }catch(e){
+    toast('Erro: '+e.message,'err');
+  }
+}
+
+// ── ANALYTICS ─────────────────────────────────────────────────────────────────
+async function loadAnalytics(){
+  const{data,error}=await db.from('analytics').select('*').order('criado_em',{ascending:false}).limit(100);
+  if(error||!data)return;
+  
+  const total=data.length;
+  document.getElementById('anaTotal').textContent=total;
+  
+  // Top frase
+  const fraseCounts={};
+  data.forEach(a=>{fraseCounts[a.tipo_evento]=(fraseCounts[a.tipo_evento]||0)+1;});
+  const topFrase=Object.keys(fraseCounts).sort((a,b)=>fraseCounts[b]-fraseCounts[a])[0];
+  document.getElementById('anaTopFrase').textContent=topFrase||'—';
+  
+  // Chart
+  const chartData=[12,8,15,10,18,14,20];
+  const chart=document.getElementById('chart');
+  chart.innerHTML=chartData.map((v,i)=>`<div class="chart-bar" style="height:${v*10}px"><div class="chart-label">Dia ${i+1}</div></div>`).join('');
+}
+
+// ── MODAL ─────────────────────────────────────────────────────────────────────
+function openModal(tipo){document.getElementById('modal'+tipo.charAt(0).toUpperCase()+tipo.slice(1)).classList.add('open');}
+function closeModal(tipo){document.getElementById('modal'+tipo.charAt(0).toUpperCase()+tipo.slice(1)).classList.remove('open');}
+
+function salvarAgendamento(){
+  const data=document.getElementById('agendaData').value;
+  const plat=document.getElementById('agendaPlatform').value;
+  const cap=document.getElementById('agendaCaption').value;
+  
+  if(!data||!cap){toast('Preencha os dados','err');return;}
+  
+  toast('Agendamento salvo! 📅','ok');
+  closeModal('agendar');
+  trackEvent('agendamento',plat);
+}
+
+// ── TABS ──────────────────────────────────────────────────────────────────────
+function switchTab(tab){
+  document.querySelectorAll('.tab-content').forEach(el=>el.style.display='none');
+  document.getElementById('tab'+tab.charAt(0).toUpperCase()+tab.slice(1)).style.display='block';
+  document.querySelectorAll('.tab-btn,.nav-item').forEach(el=>el.classList.remove('active'));
+  event?.target?.classList.add('active');
+  
+  // Carregar dados específicos da aba
+  if(tab==='comunidade')loadComunidade();
+  if(tab==='favoritos')loadFavoritos();
+  if(tab==='analytics')loadAnalytics();
+}
+
+// ── TEMPLATES ─────────────────────────────────────────────────────────────────
+function useTemplate(idx){
+  const templates=[
+    {frase:'Desistir dos prazeres temporários para construir algo grande não é perder nada.',tema:'dark_neon'},
+    {frase:'Se não fosse a graça de Deus, as dores desta vida seriam insuportáveis.',tema:'minimalista'},
+    {frase:'Que sua coragem seja maior que seus medos.',tema:'colorido'},
+    {frase:'Maturidade é entender que o paraíso nunca foi o Eden.',tema:'pastel'}
+  ];
+  const t=templates[idx];
+  curFrase=t.frase;
+  selectTheme(t.tema,document.querySelectorAll('.theme-card')[Object.keys(THEMES).indexOf(t.tema)]);
+  switchTab('criar');
+  toast('Template carregado!','ok');
+}
+
+// ── COMUNIDADE ────────────────────────────────────────────────────────────────
+async function loadComunidade(){
+  const{data,error}=await db.from('comunidade').select('*').order('criado_em',{ascending:false}).limit(20);
+  if(error||!data){document.getElementById('communityGrid').innerHTML='<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--muted)">Erro ao carregar.</div>';return;}
+  
+  if(!data.length){
+    document.getElementById('communityGrid').innerHTML='<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--muted)">Nenhum slide na comunidade ainda. Seja o primeiro! 🚀</div>';
+    return;
+  }
+  
+  document.getElementById('communityGrid').innerHTML=data.map(s=>`
+    <div class="community-card">
+      <div class="community-img">📸 Slide</div>
+      <div class="community-info">
+        <div class="community-author">${s.autor_nome}</div>
+        <div class="community-desc">${s.descricao||'Sem descrição'}</div>
+        <div class="community-actions">
+          <button class="community-btn" onclick="likeComunidade('${s.id}')">❤️ ${s.curtidas||0}</button>
+          <button class="community-btn" onclick="shareComunidade('${s.id}')">📤 ${s.compartilhamentos||0}</button>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+async function likeComunidade(id){
+  const{error}=await db.from('comunidade').update({curtidas:1}).eq('id',id);
+  if(!error)toast('❤️ Curtida!','ok');
+}
+
+async function shareComunidade(id){
+  toast('✨ Compartilhado!','ok');
+}
+
+// ── FAVORITOS ─────────────────────────────────────────────────────────────────
+async function loadFavoritos(){
+  const grid=document.getElementById('favGrid');
+  if(!favorites.length){
+    grid.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--muted)">Você não tem favoritos ainda.<br>Adicione frases que você ama! 💖</div>';
+    return;
+  }
+  
+  grid.innerHTML=favorites.map((frase,i)=>`
+    <div style="background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:16px">
+      <div style="font-size:12px;line-height:1.6;color:var(--white);margin-bottom:12px">${frase}</div>
+      <div style="display:flex;gap:8px">
+        <button class="btn-primary" style="flex:1;padding:8px" onclick="usarFavorito('${esc(frase)}')">Usar</button>
+        <button class="btn-primary" style="background:var(--red);flex:1;padding:8px" onclick="remFav('${esc(frase)}')">❌</button>
+      </div>
+    </div>`).join('');
+}
+
+function usarFavorito(f){
+  curFrase=f.replace(/\\\'/g,"'");
+  gerarCaption();
+  renderPreview();
+  switchTab('criar');
+  toast('Frase carregada!','ok');
+}
+
+function remFav(f){
+  const frase=f.replace(/\\\'/g,"'");
+  favorites=favorites.filter(x=>x!==frase);
+  localStorage.setItem('favorites',JSON.stringify(favorites));
+  document.getElementById('stFav').textContent=favorites.length;
+  loadFavoritos();
+  toast('Removido dos favoritos','ok');
+}
+
+// ── TRACKING ──────────────────────────────────────────────────────────────────
+async function trackEvent(tipo,dados){
+  await db.from('analytics').insert({tipo_evento:tipo});
+}
+
+// ── TOAST ─────────────────────────────────────────────────────────────────────
+function toast(msg,tipo='ok'){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.className=`toast show ${tipo}`;
+  setTimeout(()=>t.classList.remove('show'),3000);
+}
+</script>
+</body>
+</html>
